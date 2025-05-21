@@ -2,35 +2,37 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Alert, Image, StatusBar } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import styles from '../styles/ResetPasswordScreenStyle';
+import api from '../hooks/ApiAxios/ApiAxios';
 
 const ResetPasswordScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleResetPassword = async () => {
+    if (!email || !password || !confirmPassword) {
+      Alert.alert('Erro', 'Preencha todos os campos.');
+      return;
+    }
+
     if (password !== confirmPassword) {
       Alert.alert('Erro', 'As senhas não coincidem.');
       return;
     }
 
     try {
-      const response = await fetch('https://seu-backend.com/api/reset-password', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
+      const response = await api.put('/api/professores/resetar-senha', {
+        email,
+        novaSenha: password,
       });
 
-      if (response.ok) {
-        Alert.alert('Sucesso', 'Senha redefinida com sucesso!');
-        navigation.navigate('Login');
-      } else {
-        Alert.alert('Erro', 'Não foi possível redefinir a senha.');
-      }
+      Alert.alert('Sucesso', 'Senha redefinida com sucesso!');
+      navigation.navigate('Login');
     } catch (error) {
-      Alert.alert('Erro', 'Ocorreu um erro. Tente novamente.');
+      console.error(error);
+      Alert.alert('Erro', 'Não foi possível redefinir a senha. Verifique os dados e tente novamente.');
     }
   };
 
@@ -38,44 +40,64 @@ const ResetPasswordScreen = ({ navigation }) => {
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" />
 
-      {/* Botão de Voltar no topo esquerdo */}
+      {/* Botão de Voltar */}
       <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
         <Ionicons name="arrow-back" size={30} color="#1C4C77" />
       </TouchableOpacity>
 
-      {/* Seção do Topo */}
+      {/* Topo */}
       <View style={styles.topSection}>
         <Image source={require('../assets/logo.png')} style={styles.logoImage} />
         <Text style={styles.logoText}>SalaFacil</Text>
         <Text style={styles.logoSubText}>Space</Text>
       </View>
 
+      {/* Inputs */}
       <View style={styles.inputContainer}>
-  <TextInput
-    style={styles.input}
-    placeholder="Email"
-    value={email}
-    onChangeText={setEmail}
-    keyboardType="email-address"
-  />
-  <TextInput
-    style={styles.input}
-    placeholder="Nova Senha"
-    secureTextEntry
-    value={password}
-    onChangeText={setPassword}
-  />
-  <TextInput
-    style={styles.input}
-    placeholder="Confirme a Nova Senha"
-    secureTextEntry
-    value={confirmPassword}
-    onChangeText={setConfirmPassword}
-  />
-</View>
+        <TextInput
+          style={styles.input}
+          placeholder="Email"
+          keyboardType="email-address"
+          value={email}
+          onChangeText={setEmail}
+        />
 
+        <View style={styles.passwordContainer}>
+          <TextInput
+            style={styles.passwordInput}
+            placeholder="Nova Senha"
+            secureTextEntry={!showPassword}
+            value={password}
+            onChangeText={setPassword}
+          />
+          <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+            <Ionicons
+              name={showPassword ? 'eye-off' : 'eye'}
+              size={24}
+              color="#888"
+            />
+          </TouchableOpacity>
+        </View>
 
-      {/* Botão de Resetar Senha */}
+        <View style={styles.passwordContainer}>
+          <TextInput
+            style={styles.passwordInput}
+            placeholder="Confirme a Nova Senha"
+            secureTextEntry={!showConfirmPassword}
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+          />
+          <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
+            <Ionicons
+              name={showConfirmPassword ? 'eye-off' : 'eye'}
+              size={24}
+              color="#888"
+            />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Botão */}
       <TouchableOpacity style={styles.loginButton} onPress={handleResetPassword}>
         <Text style={styles.loginButtonText}>Redefinir Senha</Text>
       </TouchableOpacity>

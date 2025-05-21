@@ -1,69 +1,104 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { 
+  View, 
+  Text, 
+  ScrollView, 
+  ActivityIndicator, 
+  TouchableOpacity, 
+  Alert,
+  Image,  
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useRoute, useNavigation } from '@react-navigation/native';
-import styles from '../styles/HomeScreenStyle';
+import api from '../hooks/ApiAxios/ApiAxios';
+import styles from '../styles/CategoryDetailsScreenStyle';
+
+// Objeto com as imagens por categoria
+import labImages from '../constants/labImages';
 
 const CategoryDetails = () => {
   const route = useRoute();
   const navigation = useNavigation();
-  const { category } = route.params || {};  // Protege contra categoria indefinida
+  const { category } = route.params || {};
+
   const [labs, setLabs] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchLabsForCategory = () => {
-      if (!category) {
-        setLabs([]); // Se não houver categoria, não mostra nada
-        return;
+    if (!category) return;
+
+    const fetchLabs = async () => {
+      try {
+        const response = await api.get('/api/laboratorios');
+        const allLabs = response.data || [];
+        const filteredLabs = allLabs.filter(lab => lab.categoria.id === category.id);
+        setLabs(filteredLabs);
+      } catch (error) {
+        console.error('Erro ao buscar laboratórios:', error);
+        Alert.alert('Erro', 'Não foi possível carregar os laboratórios.');
+      } finally {
+        setLoading(false);
       }
-
-      const labsData = {
-        'Informática': [
-          { id: 1, name: 'Laboratório de Informática I', location: 'Uninassau, PE', image: require('../assets/labTi.png') },
-          { id: 2, name: 'Laboratório de Informática II', location: 'Uninassau, PE', image: require('../assets/labTi.png') },
-        ],
-        'Med Vet': [
-          { id: 1, name: 'Laboratório de Med Vet I', location: 'Uninassau, PE', image: require('../assets/labMedVet.jpg') },
-        ],
-        'Fisioterapia': [
-          { id: 1, name: 'Laboratório de Fisioterapia I', location: 'Uninassau, PE', image: require('../assets/labFisio.jpg') },
-        ],
-        'Engenharia': [
-          { id: 1, name: 'Laboratório de Engenharia I', location: 'Uninassau, PE', image: require('../assets/labTi.png') },
-        ],
-      };
-
-      setLabs(labsData[category] || []); // Carrega os laboratórios da categoria selecionada ou vazio
     };
 
-    fetchLabsForCategory();
+    fetchLabs();
   }, [category]);
+
+  const getLabLocation = (lab) => {
+    if (lab.localizacao?.trim()) return lab.localizacao;
+    if (lab.bloco && lab.andar && lab.numero)
+      return `Bloco ${lab.bloco}, Andar ${lab.andar}, Sala ${lab.numero}`;
+    return 'Sem localização';
+  };
+
+  const getCategoryImage = (nomeCategoria) => {
+    return labImages[nomeCategoria] || labImages.default;
+  };
 
   if (!category) {
     return (
       <View style={styles.container}>
-        <Text style={styles.title}>Categoria não encontrada!</Text>
+        <Text>Categoria não encontrada.</Text>
+      </View>
+    );
+  }
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color="#000" />
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Laboratórios de {category}</Text>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={28} color="#fff" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>{category.nome}</Text>
+        <View style={{ width: 28 }} />
+      </View>
 
-      <ScrollView>
+      <Text style={styles.title}>Laboratórios da categoria</Text>
+
+      <ScrollView contentContainerStyle={styles.labList}>
         {labs.length === 0 ? (
-          <Text style={styles.emptyMessage}>Não há laboratórios disponíveis para essa categoria.</Text>
+          <Text style={{ textAlign: 'center', marginTop: 20 }}>
+            Nenhum laboratório encontrado.
+          </Text>
         ) : (
-          labs.map(lab => (
-            <TouchableOpacity key={lab.id} onPress={() => navigation.navigate('LabDetails', { lab })}>
-              <View style={styles.labCard}>
-                <Image source={lab.image} style={styles.labImage} />
-                <View style={styles.labInfo}>
-                  <Text style={styles.labName}>{lab.name}</Text>
-                  <Text style={styles.labLocation}>{lab.location}</Text>
-                </View>
-              </View>
-            </TouchableOpacity>
+          labs.map((lab) => (
+            <View key={lab.id} style={styles.labCard}>
+              <Image
+                source={getCategoryImage(lab.categoria?.nome)}
+                style={{ width: 100, height: 100, borderRadius: 8, marginBottom: 8 }}
+                resizeMode="cover"
+              />
+              <Text style={styles.labName}>{lab.nome}</Text>
+              <Text style={styles.labLocation}>{getLabLocation(lab)}</Text>
+            </View>
           ))
         )}
       </ScrollView>

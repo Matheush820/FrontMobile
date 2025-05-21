@@ -1,72 +1,134 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import React, { useEffect, useState, useRef } from 'react';
+import { 
+  View, 
+  Text, 
+  ScrollView, 
+  TouchableOpacity, 
+  ActivityIndicator, 
+  Animated 
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import api from '../hooks/ApiAxios/ApiAxios';
 import styles from '../styles/LabsOverviewScreenStyle';
+
+const iconMap = {
+  'Tecnologia da Informação': 'laptop-outline',
+  'Saúde': 'heart-outline',
+  'Engenharia': 'construct-outline',
+  'Ciências Humanas': 'people-outline',
+  'Ciências Exatas': 'calculator-outline',
+  'Ciências Biológicas': 'leaf-outline',
+};
+
+const getColor = (category) => {
+  switch (category) {
+    case 'Tecnologia da Informação': return '#FF5733';
+    case 'Saúde': return '#33FF57';
+    case 'Engenharia': return '#5733FF';
+    case 'Ciências Humanas': return '#FFD700';
+    case 'Ciências Exatas': return '#FFA500';
+    case 'Ciências Biológicas': return '#228B22';
+    default: return '#808080';
+  }
+};
+
+const Tabs = [
+  { tab: 'Home', icon: 'home', route: 'Home' },
+  { tab: 'Rooms', icon: 'search', route: 'Rooms' },
+  { tab: 'Appointments', icon: 'calendar', route: 'Appointments' },
+  { tab: 'Profile', icon: 'person', route: 'Profile' },
+];
 
 const LabsOverview = () => {
   const navigation = useNavigation();
-  const [labs, setLabs] = useState([
-    { id: 1, name: 'Laboratório de Informática', category: 'Informática', image: 'https://via.placeholder.com/100' },
-    { id: 2, name: 'Laboratório de Med Vet', category: 'Med Vet', image: 'https://via.placeholder.com/100' },
-    { id: 3, name: 'Laboratório de Fisioterapia', category: 'Fisioterapia', image: 'https://via.placeholder.com/100' },
-    { id: 4, name: 'Laboratório de Engenharia', category: 'Engenharia', image: 'https://via.placeholder.com/100' },
-    { id: 5, name: 'Laboratório de Química', category: 'Química', image: 'https://via.placeholder.com/100' },
-    { id: 6, name: 'Laboratório de Biologia', category: 'Biologia', image: 'https://via.placeholder.com/100' },
-    { id: 7, name: 'Laboratório de Física', category: 'Física', image: 'https://via.placeholder.com/100' },
-    { id: 8, name: 'Laboratório de Psicologia', category: 'Psicologia', image: 'https://via.placeholder.com/100' },
-  ]);
+  const [categorias, setCategorias] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('Home');
 
-  const getColor = (category) => {
-    switch (category) {
-      case 'Informática':
-        return '#1E90FF'; // Nova cor para Informática
-      case 'Med Vet':
-        return '#FF6347';
-      case 'Fisioterapia':
-        return '#32CD32';
-      case 'Engenharia':
-        return '#8A2BE2';
-      case 'Química':
-        return '#FF4500';
-      case 'Biologia':
-        return '#228B22';
-      case 'Física':
-        return '#FFD700';
-      case 'Psicologia':
-        return '#BA55D3';
-      default:
-        return '#808080';
-    }
+  const scaleValues = useRef(
+    Tabs.reduce((acc, { tab }) => {
+      acc[tab] = new Animated.Value(1);
+      return acc;
+    }, {})
+  ).current;
+
+  const handleTabPress = (tab, route) => {
+    setActiveTab(tab);
+    Animated.sequence([
+      Animated.timing(scaleValues[tab], { toValue: 1.2, duration: 150, useNativeDriver: true }),
+      Animated.timing(scaleValues[tab], { toValue: 1, duration: 150, useNativeDriver: true }),
+    ]).start();
+    navigation.navigate(route);
   };
 
-  return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Laboratórios Disponíveis</Text>
+  useEffect(() => {
+    const fetchCategorias = async () => {
+      try {
+        const response = await api.get('/api/categorias');
+        setCategorias(response.data);
+      } catch (error) {
+        console.error('Erro ao buscar categorias:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCategorias();
+  }, []);
 
-      {/* Scroll vertical com os laboratórios */}
-      <ScrollView contentContainerStyle={styles.cardContainer}>
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color="#000" />
+      </View>
+    );
+  }
+
+  return (
+    <View style={{ flex: 1 }}>
+      {/* Navbar topo com seta voltar */}
+      <View style={styles.navbarTop}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={28} color="#fff" />
+        </TouchableOpacity>
+        <Text style={styles.navbarTitle}>Categorias</Text>
+        <View style={{ width: 28 }} />
+      </View>
+
+      {/* Conteúdo */}
+      <ScrollView contentContainerStyle={styles.container}>
+        <Text style={styles.title}>Categorias de Laboratórios</Text>
         <View style={styles.gridContainer}>
-          {labs.map((lab) => (
+          {categorias.map((categoria) => (
             <TouchableOpacity
-              key={lab.id}
-              style={[styles.labCard, { backgroundColor: getColor(lab.category) }]}
-              onPress={() => navigation.navigate('LabDetails', { lab })}
+              key={categoria.id}
+              style={[styles.categoryCard, { backgroundColor: getColor(categoria?.nome ?? '') }]}
+              onPress={() => navigation.navigate('CategoryDetails', { category: categoria })}
             >
-              <Image source={{ uri: lab.image }} style={styles.labImage} />
-              <View style={styles.labInfo}>
-                <Text style={styles.labName}>{lab.name}</Text>
-              </View>
               <Ionicons
-                name={lab.category === 'Informática' ? 'laptop' : lab.category === 'Med Vet' ? 'paw' : lab.category === 'Fisioterapia' ? 'fitness' : lab.category === 'Engenharia' ? 'construct' : 'flask'}
-                size={28}
+                name={iconMap[categoria?.nome] || 'apps-outline'}
+                size={30}
                 color="#fff"
-                style={styles.labIcon}
+                style={styles.categoryIcon}
               />
+              <Text style={styles.categoryText}>
+                {String(categoria?.nome ?? 'Sem nome')}
+              </Text>
             </TouchableOpacity>
           ))}
         </View>
       </ScrollView>
+
+      {/* Navbar inferior */}
+      <View style={styles.navBar}>
+        {Tabs.map(({ tab, icon, route }) => (
+          <TouchableOpacity key={tab} onPress={() => handleTabPress(tab, route)}>
+            <Animated.View style={{ transform: [{ scale: scaleValues[tab] }] }}>
+              <Ionicons name={icon} size={28} color={activeTab === tab ? '#1794B9' : '#000'} />
+            </Animated.View>
+          </TouchableOpacity>
+        ))}
+      </View>
     </View>
   );
 };

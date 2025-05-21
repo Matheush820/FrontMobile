@@ -7,10 +7,7 @@ import styles from '../styles/EditAppointMentsScreenStyle';
 const labs = [
   { id: 1, course: 'TI', name: 'Laboratório Informática I', image: require('../assets/labTi.png') },
   { id: 2, course: 'TI', name: 'Laboratório Informática II', image: require('../assets/labTi.png') },
-  { id: 3, course: 'Medicina Veterinária', name: 'Laboratório de Medicina Veterinária', image: require('../assets/labMedVet.jpg') },
   { id: 4, course: 'Engenharia Civil', name: 'Laboratório de Engenharia Civil', image: require('../assets/labTi.png') },
-  { id: 5, course: 'Química', name: 'Laboratório de Química', image: require('../assets/labMedVet.jpg') },
-  { id: 6, course: 'Fisioterapia', name: 'Laboratório de Fisioterapia', image: require('../assets/labFisio.jpg') },
 ];
 
 const EditAppointmentScreen = ({ route }) => {

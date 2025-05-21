@@ -1,87 +1,111 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Image, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Image, Alert, ActivityIndicator } from 'react-native';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { Picker } from '@react-native-picker/picker';
 import { Ionicons } from '@expo/vector-icons';
 import styles from '../styles/AgendamentoScreenStyle';
+import api from '../hooks/ApiAxios/ApiAxios';
 
 const AgendamentoScreen = ({ route, navigation }) => {
-  const { lab } = route.params;
+  const { lab, professorId, categoriaId, labImage } = route.params;
+
   const [startDate, setStartDate] = useState(new Date());
-  const [selectedCourse, setSelectedCourse] = useState('');
+  const [selectedCourseId, setSelectedCourseId] = useState('');
+  const [selectedHorarioId, setSelectedHorarioId] = useState('');
   const [isStartDatePickerVisible, setStartDatePickerVisible] = useState(false);
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState(null);
 
-  const courses = ['Curso 1', 'Curso 2', 'Curso 3'];
+  const [cursos, setCursos] = useState([]);
+  const [horarios, setHorarios] = useState([]);
 
-  // Horários pré-definidos
-  const timeSlots = [
-    { label: '08:00 - 10:30', value: '08:00 - 10:30' },
-    { label: '10:30 - 13:00', value: '10:30 - 13:00' },
-    { label: '13:00 - 15:30', value: '13:00 - 15:30' },
-    { label: '15:30 - 18:00', value: '15:30 - 18:00' },
-  ];
+  const [loadingCursos, setLoadingCursos] = useState(false);
+  const [loadingHorarios, setLoadingHorarios] = useState(false);
+  const [confirming, setConfirming] = useState(false);
 
-  // Lista de horários já agendados (simulando com dados de exemplo)
-  const [bookedSlots, setBookedSlots] = useState([
-    { date: '2025-03-20', slot: '08:00 - 10:30' },  
-    { date: '2025-03-20', slot: '10:30 - 13:00' },  
-  ]);
+  // Buscar cursos
+  useEffect(() => {
+    const fetchCursos = async () => {
+      setLoadingCursos(true);
+      try {
+        const response = await api.get('/api/cursos');
+        setCursos(response.data);
+      } catch (err) {
+        console.error('Erro ao buscar cursos', err);
+        Alert.alert('Erro', 'Não foi possível carregar os cursos.');
+      } finally {
+        setLoadingCursos(false);
+      }
+    };
 
-  // Função para verificar se o horário está disponível
-  const isSlotAvailable = (date, slot) => {
-    return !bookedSlots.some(booking => booking.date === date && booking.slot === slot);
+    fetchCursos();
+  }, []);
+
+  // Buscar horários
+  useEffect(() => {
+    const fetchHorarios = async () => {
+      setLoadingHorarios(true);
+      try {
+        const response = await api.get('/api/horarios');
+        setHorarios(response.data);
+      } catch (err) {
+        console.error('Erro ao buscar horários', err);
+        Alert.alert('Erro', 'Não foi possível carregar os horários.');
+      } finally {
+        setLoadingHorarios(false);
+      }
+    };
+
+    fetchHorarios();
+  }, []);
+
+  const handleStartDateChange = (date) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (date < today) {
+      Alert.alert('Data inválida', 'Não é possível agendar para datas passadas.');
+      setStartDatePickerVisible(false);
+      return;
+    }
+
+    setStartDate(date);
+    setStartDatePickerVisible(false);
   };
 
-  // Lógica para confirmar o agendamento
   const handleConfirm = async () => {
-    if (!selectedCourse || !startDate || !selectedTimeSlot) {
+    if (!selectedCourseId || !selectedHorarioId) {
       Alert.alert('Erro', 'Por favor, preencha todos os campos.');
       return;
     }
 
-    // Código de consumo da API (comentado por enquanto)
-    /*
+    setConfirming(true);
     try {
-      const response = await fetch('sua-api-url/agendamento', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          startDate,
-          timeSlot: selectedTimeSlot,
-          course: selectedCourse
-        }),
-      });
+      const body = {
+        data: startDate.toISOString().split('T')[0],
+        professorId,
+        cursoId: parseInt(selectedCourseId),
+        laboratorioId: lab.id,
+        horarioId: parseInt(selectedHorarioId),
+        categoriaId,
+      };
 
-      const data = await response.json();
+      await api.post('/api/reservas', body);
 
-      if (response.ok) {
-        console.log('Agendamento confirmado:', data);
-        Alert.alert('Sucesso', `Agendamento confirmado para o curso ${selectedCourse}!`);
-        navigation.goBack();
-      } else {
-        Alert.alert('Erro', data.message || 'Houve um problema ao confirmar o agendamento.');
-      }
+      Alert.alert('Sucesso', 'Agendamento realizado com sucesso!');
+      navigation.goBack();
     } catch (error) {
-      console.error('Erro ao confirmar o agendamento', error);
-      Alert.alert('Erro', 'Houve um problema ao confirmar o agendamento. Tente novamente.');
+      console.error('Erro ao fazer agendamento', error);
+      const msg = error?.response?.data?.message || 'Erro ao realizar agendamento.';
+      Alert.alert('Erro', msg);
+    } finally {
+      setConfirming(false);
     }
-    */
-  };
-
-  // Manter a visibilidade do seletor de data/hora de início
-  const handleStartDateChange = (date) => {
-    setStartDate(date);
-    setStartDatePickerVisible(false);
   };
 
   return (
     <ScrollView style={styles.container}>
       <View style={styles.imageContainer}>
-        {lab.image ? (
-          <Image source={lab.image} style={styles.labImage} />
+        {labImage ? (
+          <Image source={labImage} style={styles.labImage} />
         ) : (
           <Text style={styles.noImageText}>Imagem não disponível</Text>
         )}
@@ -90,17 +114,15 @@ const AgendamentoScreen = ({ route, navigation }) => {
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.labName}>{lab.name}</Text>
+      <Text style={styles.labName}>{lab.nome}</Text>
 
-      {/* Data de Início */}
+      {/* Data */}
       <Text style={styles.sectionTitle}>Data de Agendamento</Text>
       <View style={styles.dateTimeContainer}>
         <View style={styles.dateTimeBox}>
-          <Text style={styles.boxLabel}>Início</Text>
+          <Text style={styles.boxLabel}>Data</Text>
           <TouchableOpacity onPress={() => setStartDatePickerVisible(true)}>
-            <Text style={styles.dateText}>
-              {startDate.toLocaleDateString()}
-            </Text>
+            <Text style={styles.dateText}>{startDate.toLocaleDateString()}</Text>
           </TouchableOpacity>
           <DateTimePickerModal
             isVisible={isStartDatePickerVisible}
@@ -112,48 +134,72 @@ const AgendamentoScreen = ({ route, navigation }) => {
         </View>
       </View>
 
-      {/* Seleção do Curso */}
-      <Text style={styles.sectionTitle}>Selecione o Curso</Text>
+      {/* Curso */}
+      <Text style={styles.sectionTitle}>Curso</Text>
       <View style={styles.pickerContainer}>
-        <Picker
-          selectedValue={selectedCourse}
-          onValueChange={(itemValue) => setSelectedCourse(itemValue)}
-          style={styles.picker}
-        >
-          <Picker.Item label="Selecione um Curso" value="" />
-          {courses.map((course, index) => (
-            <Picker.Item key={index} label={course} value={course} />
-          ))}
-        </Picker>
+        {loadingCursos ? (
+          <ActivityIndicator size="small" color="#000" />
+        ) : (
+          <Picker
+            selectedValue={selectedCourseId}
+            onValueChange={(value) => setSelectedCourseId(value)}
+            style={styles.picker}
+          >
+            <Picker.Item label="Selecione um curso" value="" />
+            {cursos.map((curso) => (
+              <Picker.Item key={curso.id} label={curso.nome} value={curso.id.toString()} />
+            ))}
+          </Picker>
+        )}
       </View>
 
-      {/* Seleção do Horário */}
-      <Text style={styles.sectionTitle}>Selecione um Horário</Text>
+      {/* Horário */}
+      <Text style={styles.sectionTitle}>Horário</Text>
       <View style={styles.pickerContainer}>
-        <Picker
-          selectedValue={selectedTimeSlot}
-          onValueChange={(itemValue) => setSelectedTimeSlot(itemValue)}
-          style={styles.picker}
-        >
-          <Picker.Item label="Selecione um Horário" value="" />
-          {timeSlots.map((slot, index) => (
-            <Picker.Item
-              key={index}
-              label={slot.label}
-              value={slot.value}
-              enabled={isSlotAvailable(startDate.toLocaleDateString(), slot.value)}
-            />
-          ))}
-        </Picker>
+        {loadingHorarios ? (
+          <ActivityIndicator size="small" color="#000" />
+        ) : (
+          <Picker
+            selectedValue={selectedHorarioId}
+            onValueChange={(value) => setSelectedHorarioId(value)}
+            style={styles.picker}
+          >
+            <Picker.Item label="Selecione um horário" value="" />
+            {horarios.map((horario) => {
+              const hi = horario.horaInicio || { hour: 0, minute: 0 };
+              const hf = horario.horaFim || { hour: 0, minute: 0 };
+
+              const hiHour = hi.hour?.toString().padStart(2, '0') || '00';
+              const hiMinute = hi.minute?.toString().padStart(2, '0') || '00';
+              const hfHour = hf.hour?.toString().padStart(2, '0') || '00';
+              const hfMinute = hf.minute?.toString().padStart(2, '0') || '00';
+
+              return (
+                <Picker.Item
+                  key={horario.id}
+                  label={`${horario.diaSemana} - ${hiHour}:${hiMinute} - ${hfHour}:${hfMinute}`}
+                  value={horario.id.toString()}
+                />
+              );
+            })}
+          </Picker>
+        )}
       </View>
 
-      {/* Botão Confirmar */}
+      {/* Confirmar */}
       <TouchableOpacity
-        style={[styles.confirmButton, !selectedCourse || !startDate || !selectedTimeSlot ? styles.buttonDisabled : {}]}
+        style={[
+          styles.confirmButton,
+          (!selectedCourseId || !selectedHorarioId || confirming) ? styles.buttonDisabled : {},
+        ]}
         onPress={handleConfirm}
-        disabled={!selectedCourse || !startDate || !selectedTimeSlot}
+        disabled={!selectedCourseId || !selectedHorarioId || confirming}
       >
-        <Text style={styles.confirmButtonText}>Confirmar Agendamento</Text>
+        {confirming ? (
+          <ActivityIndicator size="small" color="#fff" />
+        ) : (
+          <Text style={styles.confirmButtonText}>Confirmar Agendamento</Text>
+        )}
       </TouchableOpacity>
     </ScrollView>
   );

@@ -2,56 +2,86 @@ import { StyleSheet } from 'react-native';
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: '#0093B6', // Cor de fundo azul que você gosta
-    padding: 20,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 20,
-  },
-  cardContainer: {
+    flexGrow: 1,
+    backgroundColor: '#0093B6', // Fundo azul vibrante
+    paddingHorizontal: 20,
+    paddingTop: 30,
     paddingBottom: 20,
   },
+
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 25,
+    textAlign: 'center',
+    letterSpacing: 1,
+  },
+
   gridContainer: {
     flexDirection: 'row',
-    flexWrap: 'wrap', // Permite que os cards se movam para a próxima linha
-    justifyContent: 'space-between', // Espaçamento entre as colunas
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
   },
-  labCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 15,
-    width: '48%', // 2 cards por linha, 48% para dar espaço entre eles
-    height: 180, // Tamanho fixo para manter o layout consistente
-    justifyContent: 'center',
-    alignItems: 'center',
+
+  categoryCard: {
+    width: '48%',
+    backgroundColor: '#fff',
+    borderRadius: 18,
+    paddingVertical: 30,
+    paddingHorizontal: 20,
+    marginBottom: 20,
+
+    // Sombras para iOS
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3, // Sombras no Android
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+
+    // Elevação para Android
+    elevation: 6,
+
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  labImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    marginBottom: 10,
+
+  categoryIcon: {
+    marginBottom: 15,
   },
-  labInfo: {
-    marginBottom: 10,
-  },
-  labName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
+
+  categoryText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#fff',  // Mudei para branco para melhor contraste
     textAlign: 'center',
+    letterSpacing: 0.5,
   },
-  labIcon: {
-    marginTop: 10,
+
+  // Navbar Top (barra superior com seta)
+  navbarTop: {
+    height: 60,
+    backgroundColor: '#0093B6',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 15,
+    paddingTop: 15,
+  },
+
+  navbarTitle: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+
+  // Navbar Inferior (barra de navegação)
+  navBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    backgroundColor: '#fff',
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#ddd',
   },
 });
 

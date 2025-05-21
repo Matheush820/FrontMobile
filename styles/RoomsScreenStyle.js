@@ -79,18 +79,13 @@ const styles = StyleSheet.create({
     opacity: 0.9,
   },
   navBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    position: 'absolute',
-    bottom: 0,
-    width: '100%',
-    height: 65,
-    backgroundColor: '#FFF',
-    borderTopWidth: 1,
-    borderColor: '#DDD',
-    elevation: 5,
-  },
+  flexDirection: 'row',
+  justifyContent: 'space-around',
+  backgroundColor: '#fff',
+  paddingVertical: 10,
+  borderTopWidth: 1,
+  borderTopColor: '#ddd',
+},
 });
 
 export default styles;

@@ -1,5 +1,15 @@
 import React, { useState } from 'react';
-import { SafeAreaView, StatusBar, Text, TextInput, TouchableOpacity, View, Image, ActivityIndicator } from 'react-native';
+import api from '../hooks/ApiAxios/ApiAxios.js';
+import {
+  SafeAreaView,
+  StatusBar,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+  Image,
+  ActivityIndicator
+} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import styles from '../styles/LoginScreenStyle.js';
 
@@ -25,38 +35,21 @@ const CreateScreen = ({ navigation }) => {
     setLoading(true);
     setError('');
 
-    // Simulação da chamada de API (comentado porque não temos o backend ainda)
-    /* 
     try {
-      const response = await fetch('https://sua-api-backend.com/create', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name, email, password }),
+      const response = await api.post('/api/professores', {
+        nome: name,
+        email: email,
+        senha: password
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        console.log('Conta criada com sucesso', data);
-        navigation.navigate('Login');
-      } else {
-        setError(data.message || 'Erro ao criar conta');
-      }
+      console.log('Conta criada com sucesso:', response.data);
+      navigation.navigate('Login');
     } catch (err) {
       console.error('Erro na API:', err);
-      setError('Deu ruim ao conectar no servidor.');
+      setError(err.response?.data?.message || 'Deu ruim ao conectar no servidor.');
     } finally {
       setLoading(false);
     }
-    */
-
-    setTimeout(() => {
-      console.log('Cadastro simulado!');
-      navigation.navigate('Login');
-      setLoading(false);
-    }, 2000);
   };
 
   return (
